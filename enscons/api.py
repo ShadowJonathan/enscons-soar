@@ -10,6 +10,8 @@ import os.path
 import sys
 import SCons.Script.Main
 
+from .util import get_build_from
+
 
 # optional hooks
 #
@@ -21,6 +23,13 @@ import SCons.Script.Main
 
 
 def _run(alias):
+    build_from = get_build_from()
+    if build_from is not None:
+        print(f"Changing directory to {build_from} to position SCons")
+        os.chdir(build_from)
+    else:
+        print("Not changing directory")
+
     try:
         SCons.Script.Main.main()
     except SystemExit:

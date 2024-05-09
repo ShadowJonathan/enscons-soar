@@ -80,7 +80,7 @@ builder, a `WhlFile` builder, and an `SDist` builder.
 Here's a simple and complete example. The following sections will go over each part in more detail.
 
 ```python
-import pytoml as  toml
+import toml
 import enscons
 
 metadata = toml.load(open("pyproject.toml"))["project"]

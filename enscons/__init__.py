@@ -28,6 +28,8 @@ import os
 import sys
 import time
 
+import toml
+
 # avoid timestamps before 1980 to be friendly to .zip
 SOURCE_EPOCH_TGZ = 499162800
 SOURCE_EPOCH_ZIP = 499162860
@@ -74,6 +76,19 @@ from .util import safe_name, to_filename, generate_requirements
 import codecs
 import os.path
 import SCons.Node.FS
+
+pyproject_dir = os.path.abspath(".")
+
+
+def set_pyproject_dir(path: str):
+    global pyproject_dir
+
+    pyproject_dir = os.path.abspath(path)
+
+
+def get_pyproject() -> dict:
+    with open(os.path.join(pyproject_dir, 'pyproject.toml'), 'r') as f:
+        return dict(toml.load(f))
 
 
 def get_binary_tag():
@@ -249,7 +264,7 @@ def metadata_source(env):
                 source.append(metadata["readme"]["file"])
     elif "description_file" in metadata:
         source.append(metadata["description_file"])
-    return source
+    return [os.path.join(pyproject_dir, p) for p in source]
 
 
 def metadata_builder(target, source, env):
@@ -423,15 +438,18 @@ Tag: %s
 
 def wheel_metadata(env):
     """Build the wheel metadata."""
+
+    pyproject_path = os.path.join(pyproject_dir, "pyproject.toml")
+
     metadata = env.Command(
         env["DIST_INFO_PATH"].File("METADATA"), metadata_source(env), metadata_builder
     )
     wheelfile = env.Command(
-        env["DIST_INFO_PATH"].File("WHEEL"), "pyproject.toml", wheelmeta_builder
+        env["DIST_INFO_PATH"].File("WHEEL"), pyproject_path, wheelmeta_builder
     )
     entry_points = env.Command(
         env["DIST_INFO_PATH"].File("entry_points.txt"),
-        "pyproject.toml",
+        pyproject_path,
         entry_points_builder,
     )
     return [metadata, wheelfile, entry_points]
@@ -579,7 +597,7 @@ def SDist(env, target=None, source=None):
     """
     enscons_defaults(env)
 
-    egg_info = env.Command(egg_info_targets(env), "pyproject.toml", egg_info_builder)
+    egg_info = env.Command(egg_info_targets(env), os.path.join(pyproject_dir, "pyproject.toml"), egg_info_builder)
     env.Clean(egg_info, env["EGG_INFO_PATH"])
     env.Alias("egg_info", egg_info)
 

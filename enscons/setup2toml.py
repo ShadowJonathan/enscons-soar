@@ -13,7 +13,7 @@ import runpy
 import sys
 from collections import OrderedDict
 
-import pytoml
+import toml
 import setuptools
 
 sconstruct_template = pkgutil.get_data("enscons", "SConstruct.in").decode("utf-8")
@@ -140,20 +140,19 @@ def main():
     if "long_description" in ordered_arguments:
         sys.stderr.write("Consider replacing long_description with description_file\n")
 
-    pyproject = pytoml.dumps(
+    pyproject = toml.dumps(
         OrderedDict(
             [
                 ["project", ordered_arguments],
                 [
                     "build-system",
                     {
-                        "requires": ["pytoml>=0.1", "enscons"],
+                        "requires": ["toml>=0.1", "enscons"],
                         "build-backend": "enscons.api",
                     },
                 ],
             ]
         ),
-        sort_keys=False,
     )
 
     write_no_clobber("pyproject.toml", pyproject)

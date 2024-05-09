@@ -10,7 +10,7 @@ classifiers = [
 python_requires = ">=3.8"
 dependencies = [
   "scons>=3.0.5",
-  "pytoml>=0.1",
+  "toml>=0.1",
   "setuptools",
   "wheel",
   "attrs",
@@ -37,7 +37,7 @@ build-backend = "enscons.api"
 backend-path = ["."] # only for bootstrapped enscons
 requires = [
   "scons>=3.0.5",
-  "pytoml>=0.1",
+  "toml>=0.1",
   "setuptools",
   "wheel",
   "attrs",

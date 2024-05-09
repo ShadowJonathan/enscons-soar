@@ -4,6 +4,24 @@ Utilities otherwise provided by pkg_resources or wheel
 
 import re
 from packaging.requirements import Requirement
+import os.path
+import toml
+
+
+def get_build_from() -> "str | None":
+
+    if os.path.exists("pyproject.toml"):
+        with open("pyproject.toml", "r") as pyproject:
+            project = toml.load(pyproject)
+
+        if "tool" in project:
+            tools = project["tool"]
+
+            if "enscons" in tools:
+                enscons = tools["enscons"]
+
+                if "build-from" in enscons:
+                    return os.path.abspath(enscons["build-from"])
 
 
 def safe_name(name):
