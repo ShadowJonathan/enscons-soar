@@ -6,13 +6,14 @@ Map the .data/ subdirectory names to install paths.
 
 import os.path
 import sys
-import distutils.dist as dist
-import distutils.command.install as install
+
+from setuptools.dist import Distribution
+from setuptools.command.install import install
 
 
 def get_install_command(name):
     # late binding due to potential monkeypatching
-    d = dist.Distribution({"name": name})
+    d = Distribution({"name": name})
     i = install.install(d)
     i.finalize_options()
     return i

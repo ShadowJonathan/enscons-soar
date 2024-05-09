@@ -2,8 +2,34 @@
 Utilities otherwise provided by pkg_resources or wheel
 """
 
-from pkg_resources import safe_name, safe_extra, to_filename
+import re
 from packaging.requirements import Requirement
+
+
+def safe_name(name):
+    """Convert an arbitrary string to a standard distribution name
+
+    Any runs of non-alphanumeric/. characters are replaced with a single '-'.
+    """
+    return re.sub('[^A-Za-z0-9.]+', '-', name)
+
+
+def safe_extra(extra):
+    """Convert an arbitrary string to a standard 'extra' name
+
+    Any runs of non-alphanumeric characters are replaced with a single '_',
+    and the result is always lowercased.
+    """
+    return re.sub('[^A-Za-z0-9.-]+', '_', extra).lower()
+
+
+def to_filename(name):
+    """Convert a project or version name to its filename-escaped form
+
+    Any '-' characters are currently replaced with '_'.
+    """
+    return name.replace('-', '_')
+
 
 # from wheel
 def requires_to_requires_dist(requirement):

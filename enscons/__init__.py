@@ -63,15 +63,15 @@ sys.path = prefs + sys.path
 
 import SCons.Script
 
+# noinspection PyUnresolvedReferences
 from SCons.Script import Copy, Action, FindInstalledFiles, GetOption, AddOption
 
-from distutils import sysconfig
+import sysconfig
 from collections import defaultdict
 
 from .util import safe_name, to_filename, generate_requirements
 
 import codecs
-import distutils.ccompiler, distutils.sysconfig, distutils.unixccompiler
 import os.path
 import SCons.Node.FS
 
@@ -200,16 +200,6 @@ def egg_info_builder(target, source, env):
             entry_points_builder([dnode], source, env)
 
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
-
-def _is_string(obj):
-    # Python 2 compatibility.
-    return isinstance(obj, basestring)
-
 
 def _read_file(filename, encoding="utf-8"):
     with codecs.open(filename, mode="r", encoding=encoding) as f:
@@ -248,11 +238,11 @@ def metadata_source(env):
     # The logic here duplicates parts of metadata_builder().
     # Maybe the two should be unified.
     if "license" in metadata:
-        if not _is_string(metadata["license"]):
+        if not isinstance(metadata["license"], str):
             if not ("text" in metadata["license"]):
                 source.append(metadata["license"]["file"])
     if "readme" in metadata:
-        if _is_string(metadata["readme"]):
+        if isinstance(metadata["readme"], str):
             source.append(metadata["readme"])
         else:
             if "file" in metadata["readme"]:
@@ -280,7 +270,7 @@ def metadata_builder(target, source, env):
                 f,
                 "License",
                 metadata["license"]
-                if _is_string(metadata["license"])
+                if isinstance(metadata["license"], str)
                 else metadata["license"]["text"]
                 if "text" in metadata["license"]
                 else _read_file(metadata["license"]["file"]),
@@ -302,7 +292,7 @@ def metadata_builder(target, source, env):
                 f,
                 "Keywords",
                 metadata["keywords"]
-                if _is_string(metadata["keywords"])
+                if isinstance(metadata["keywords"], str)
                 else ",".join(metadata["keywords"]),
             )
         for classifier in metadata.get("classifiers", []):
@@ -326,7 +316,7 @@ def metadata_builder(target, source, env):
         for requirement in generate_requirements(full_requires):
             f.write("%s: %s\n" % requirement)
         if "readme" in metadata:
-            if _is_string(metadata["readme"]):
+            if isinstance(metadata["readme"], str):
                 filename = metadata["readme"]
                 contenttype = None
                 content = _read_file(filename)

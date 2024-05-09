@@ -5,13 +5,16 @@
 
 from __future__ import print_function, absolute_import
 
-import runpy
-from collections import OrderedDict
-import setuptools, distutils.core
-import sys, os, codecs, errno
-import pytoml
-
+import codecs
+import errno
+import os
 import pkgutil
+import runpy
+import sys
+from collections import OrderedDict
+
+import pytoml
+import setuptools
 
 sconstruct_template = pkgutil.get_data("enscons", "SConstruct.in").decode("utf-8")
 
@@ -90,7 +93,6 @@ def main():
         setup_.arguments = kw
 
     setuptools.setup = setup_
-    distutils.core.setup = setup_
 
     sys.path[0:0] = "."
 

@@ -5,17 +5,18 @@ version = "0.28.0"
 
 authors = [{ name = "Daniel Holth", email = "dholth@fastmail.fm" }]
 classifiers = [
-  "Programming Language :: Python :: 2.7",
   "Programming Language :: Python :: 3",
 ]
+python_requires = ">=3.8"
 dependencies = [
   "scons>=3.0.5",
   "pytoml>=0.1",
   "setuptools",
   "wheel",
   "attrs",
+  "click",
   "packaging>=20.9",
-  "editables==0.2;python_version>'3.0'",
+  "editables==0.5",
 ]
 keywords = ["packaging", "wheel"]
 license = "MIT"
@@ -35,7 +36,12 @@ setup2toml = "enscons.setup2toml:main"
 build-backend = "enscons.api"
 backend-path = ["."] # only for bootstrapped enscons
 requires = [
-  "scons",
-  "packaging",
+  "scons>=3.0.5",
   "pytoml>=0.1",
+  "setuptools",
+  "wheel",
+  "attrs",
+  "click",
+  "packaging>=20.9",
+  "editables==0.5",
 ] # enscons users add "enscons>=0.28" to this list
