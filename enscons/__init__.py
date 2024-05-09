@@ -383,7 +383,7 @@ def add_editable(target, source, env):
     import os.path
 
     project_name = env["PACKAGE_METADATA"].get("name")
-    src_root = os.path.abspath(env["PACKAGE_METADATA"].get("src_root", ""))
+    src_root = os.path.abspath(env["PACKAGE_METADATA"].get("src_root", pyproject_dir))
 
     project = editables.EditableProject(project_name, src_root)
     project.add_to_path(src_root)
