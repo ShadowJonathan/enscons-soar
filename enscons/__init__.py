@@ -77,17 +77,17 @@ import codecs
 import os.path
 import SCons.Node.FS
 
-pyproject_dir = os.path.abspath(".")
+
+def get_pyproject_dir(env) -> str:
+    return env.GetOption("pyproject_dir") or os.path.abspath(".")
 
 
-def set_pyproject_dir(path: str):
-    global pyproject_dir
-
-    pyproject_dir = os.path.abspath(path)
+def pyproject_dir_specified(env) -> bool:
+    return os.path.abspath(env.GetOption("pyproject_dir")) != os.path.abspath(".")
 
 
-def get_pyproject() -> dict:
-    with open(os.path.join(pyproject_dir, 'pyproject.toml'), 'r') as f:
+def get_pyproject(env) -> "dict | None":
+    with open(os.path.join(get_pyproject_dir(env), 'pyproject.toml'), 'r') as f:
         return dict(toml.load(f))
 
 
@@ -264,7 +264,7 @@ def metadata_source(env):
                 source.append(metadata["readme"]["file"])
     elif "description_file" in metadata:
         source.append(metadata["description_file"])
-    return [os.path.join(pyproject_dir, p) for p in source]
+    return [os.path.join(get_pyproject_dir(env), p) for p in source]
 
 
 def metadata_builder(target, source, env):
@@ -383,7 +383,7 @@ def add_editable(target, source, env):
     import os.path
 
     project_name = env["PACKAGE_METADATA"].get("name")
-    src_root = os.path.abspath(env["PACKAGE_METADATA"].get("src_root", pyproject_dir))
+    src_root = os.path.abspath(env["PACKAGE_METADATA"].get("src_root", get_pyproject_dir(env)))
 
     project = editables.EditableProject(project_name, src_root)
     project.add_to_path(src_root)
@@ -439,7 +439,7 @@ Tag: %s
 def wheel_metadata(env):
     """Build the wheel metadata."""
 
-    pyproject_path = os.path.join(pyproject_dir, "pyproject.toml")
+    pyproject_path = os.path.join(get_pyproject_dir(env), "pyproject.toml")
 
     metadata = env.Command(
         env["DIST_INFO_PATH"].File("METADATA"), metadata_source(env), metadata_builder
@@ -597,7 +597,7 @@ def SDist(env, target=None, source=None):
     """
     enscons_defaults(env)
 
-    egg_info = env.Command(egg_info_targets(env), os.path.join(pyproject_dir, "pyproject.toml"), egg_info_builder)
+    egg_info = env.Command(egg_info_targets(env), os.path.join(get_pyproject_dir(env), "pyproject.toml"), egg_info_builder)
     env.Clean(egg_info, env["EGG_INFO_PATH"])
     env.Alias("egg_info", egg_info)
 
@@ -695,6 +695,16 @@ def generate(env):
             action="store",
             metavar="DIR",
             help="sdist target directory",
+        )
+
+        AddOption(
+            "--pyproject-dir",
+            dest="pyproject_dir",
+            type="string",
+            nargs=1,
+            action="store",
+            metavar="DIR",
+            help="pyproject directory",
         )
 
         generate.once = True

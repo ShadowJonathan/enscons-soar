@@ -39,22 +39,26 @@ def _run(alias):
     return os.path.basename(str(lookup))
 
 
+def pyproject_arg() -> str:
+    return "--pyproject-dir=" + os.path.abspath(".")
+
+
 def prepare_metadata_for_build_wheel(metadata_directory, settings):
-    sys.argv[1:] = ["--wheel-dir=" + metadata_directory, "dist_info"]
+    sys.argv[1:] = [pyproject_arg(), "--wheel-dir=" + metadata_directory, "dist_info"]
     return _run("dist_info")
 
 
 def build_wheel(wheel_directory, settings, metadata_directory=None):
-    sys.argv[1:] = ["--wheel-dir=" + wheel_directory, "bdist_wheel"]
+    sys.argv[1:] = [pyproject_arg(), "--wheel-dir=" + wheel_directory, "bdist_wheel"]
     return _run("bdist_wheel")
 
 
 def build_sdist(sdist_directory, settings):
-    sys.argv[1:] = ["--dist-dir=" + sdist_directory, "sdist"]
+    sys.argv[1:] = [pyproject_arg(), "--dist-dir=" + sdist_directory, "sdist"]
     return _run("sdist")
 
 
 # PEP 660 editable installation
 def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
-    sys.argv[1:] = ["--wheel-dir=" + wheel_directory, "editable"]
+    sys.argv[1:] = [pyproject_arg(), "--wheel-dir=" + wheel_directory, "editable"]
     return _run("editable")
