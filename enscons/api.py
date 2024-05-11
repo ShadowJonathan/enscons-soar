@@ -32,11 +32,16 @@ def _run(alias):
 
     try:
         SCons.Script.Main.main()
-    except SystemExit:
-        pass
+    except SystemExit as e:
+        if e.code != 0:
+            raise Exception("scons exited non-0: " + str(e))
+
     # extreme non-api:
-    lookup = SCons.Node.arg2nodes_lookups[0](alias).sources[0]
-    return os.path.basename(str(lookup))
+    lookup = SCons.Node.arg2nodes_lookups[0](alias)
+    if lookup is None:
+        raise Exception("build failed")
+    sources = lookup.sources[0]
+    return os.path.basename(str(sources))
 
 
 def pyproject_arg() -> str:

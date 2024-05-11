@@ -590,7 +590,7 @@ def WhlFile(env, target=None, source=None):
     return whl
 
 
-def SDist(env, target=None, source=None):
+def SDist(env, target=None, source=None, pyproject=False):
     """
     Call env.Package() with sdist filename inferred from
     env['PACKAGE_METADATA'] etc.
@@ -609,6 +609,27 @@ def SDist(env, target=None, source=None):
         target = [os.path.join(env["DIST_BASE"], target_prefix)]
 
     source = sorted(env.arg2nodes(source, env.fs.Entry))
+
+    if pyproject:
+        if pyproject_dir_specified(env):
+            def altered_pyproject(env, target, source):
+                with open(str(target[0]), "w") as f:
+                    proj = get_pyproject(env)
+                    del proj["tool"]["enscons"]["build-from"]
+                    if "project" in proj and "readme" in proj["project"]:
+                        proj["project"]["readme"] = os.path.relpath(
+                            os.path.join(get_pyproject_dir(env), proj["project"]["readme"])
+                        )
+
+                    toml.dump(proj, f)
+
+            source.append(env.Command(
+                target="pyproject.toml",
+                source=get_pyproject_dir(env) + "/pyproject.toml",
+                action=altered_pyproject
+            ))
+        else:
+            source.append(env.fs.Entry("pyproject.toml"))
 
     sdist = env.PyTar(
         target=target,
