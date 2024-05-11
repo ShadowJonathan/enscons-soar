@@ -424,11 +424,7 @@ def add_manifest(target, source, env):
     archive.close()
 
 
-def correct_wheel_tags(target, source, env):
-    file = str(source[0])
-
-    dir, name = os.path.split(file)
-
+def get_tag(env) -> str:
     if not env['ROOT_IS_PURELIB']:
         from wheel.bdist_wheel import get_platform, tags, get_abi_tag
 
@@ -444,6 +440,15 @@ def correct_wheel_tags(target, source, env):
         tag = "py3-none-any"
 
     env["WHEEL_TAG"] = tag
+
+    return tag
+
+def correct_wheel_tags(target, source, env):
+    file = str(source[0])
+
+    dir, name = os.path.split(file)
+
+    tag = get_tag(env)
 
     file_name = "-".join((env["PACKAGE_NAMEVER"], tag)) + ".whl"
 
@@ -463,7 +468,7 @@ Generator: enscons (0.0.1)
 Root-Is-Purelib: %s
 Tag: %s
 """
-            % (str(env["ROOT_IS_PURELIB"]).lower(), env["WHEEL_TAG"])
+            % (str(env["ROOT_IS_PURELIB"]).lower(), get_tag(env))
         )
 
 
