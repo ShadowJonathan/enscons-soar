@@ -424,6 +424,37 @@ def add_manifest(target, source, env):
     archive.close()
 
 
+def correct_wheel_tags(target, source, env):
+    file = str(source[0])
+
+    dir, name = os.path.split(file)
+
+    if not env['ROOT_IS_PURELIB']:
+        from wheel.bdist_wheel import get_platform, tags, get_abi_tag
+
+        new_platform = get_platform(str(env["WHEEL_PATH"]))
+
+        impl_name = tags.interpreter_name()
+        impl_ver = tags.interpreter_version()
+        impl = impl_name + impl_ver
+        abi_tag = str(get_abi_tag()).lower()
+
+        tag = "-".join((impl, abi_tag, new_platform))
+    else:
+        tag = "py3-none-any"
+
+    env["WHEEL_TAG"] = tag
+
+    file_name = "-".join((env["PACKAGE_NAMEVER"], tag)) + ".whl"
+
+    to_file = os.path.join(dir, file_name)
+
+    print("correct_wheel_tags: renaming " + file + " to " + to_file)
+    os.rename(file, to_file)
+
+    env.Alias("bdist_wheel", to_file)
+
+
 def wheelmeta_builder(target, source, env):
     with open(target[0].get_path(), "w") as f:
         f.write(
@@ -579,11 +610,12 @@ def WhlFile(env, target=None, source=None):
     _patch_source_epoch()
 
     whl = env.Zip(
-        target=target or env.get("WHEEL_FILE"), source=source, ZIPROOT=env["WHEEL_PATH"]
+        target=target or env.Dir(env["WHEEL_DIR"]).File(env["PACKAGE_NAMEVER"] + ".whl"),
+        source=source, ZIPROOT=env["WHEEL_PATH"]
     )
 
     env.NoClean(whl)
-    env.Alias("bdist_wheel", whl)
+    env.Alias("bdist_wheel", whl, action=Action(correct_wheel_tags))
     env.AddPostAction(whl, Action(add_manifest))
     env.Clean(whl, env["WHEEL_PATH"])
 
@@ -597,7 +629,8 @@ def SDist(env, target=None, source=None, pyproject=False):
     """
     enscons_defaults(env)
 
-    egg_info = env.Command(egg_info_targets(env), os.path.join(get_pyproject_dir(env), "pyproject.toml"), egg_info_builder)
+    egg_info = env.Command(egg_info_targets(env), os.path.join(get_pyproject_dir(env), "pyproject.toml"),
+                           egg_info_builder)
     env.Clean(egg_info, env["EGG_INFO_PATH"])
     env.Alias("egg_info", egg_info)
 
@@ -657,6 +690,11 @@ def enscons_defaults(env):
         env["ROOT_IS_PURELIB"]
     except KeyError:
         env["ROOT_IS_PURELIB"] = env["WHEEL_TAG"].endswith("none-any")
+
+    try:
+        env["WHEEL_TAG"]
+    except KeyError:
+        env["WHEEL_TAG"] = get_binary_tag()
 
     env["EGG_INFO_PREFIX"] = GetOption("egg_base")  # pip wants this in a target dir
     env["WHEEL_DIR"] = GetOption("wheel_dir") or "dist"  # target directory for wheel
@@ -733,6 +771,8 @@ def generate(env):
     env.AddMethod(Whl)
     env.AddMethod(WhlFile)
     env.AddMethod(SDist)
+
+    env.Append(BUILDERS={'FixWhl': env.Builder(action=correct_wheel_tags)})
 
 
 def exists(env):  # only used if enscons is found on SCons search path

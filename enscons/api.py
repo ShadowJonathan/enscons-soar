@@ -40,8 +40,11 @@ def _run(alias):
     lookup = SCons.Node.arg2nodes_lookups[0](alias)
     if lookup is None:
         raise Exception("build failed")
-    sources = lookup.sources[0]
-    return os.path.basename(str(sources))
+    sources = [str(s) for s in lookup.sources if os.path.exists(str(s))]
+    if len(sources) == 0:
+        raise Exception("could not find files for " + alias + ", tried " + repr([str(s) for s in lookup.sources]))
+
+    return os.path.basename(str(sources[0]))
 
 
 def pyproject_arg() -> str:
