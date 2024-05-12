@@ -652,7 +652,8 @@ def SDist(env, target=None, source=None, pyproject=False):
         if pyproject_dir_specified(env):
             def altered_pyproject(env, target, source):
                 with open(str(target[0]), "w") as f:
-                    proj = get_pyproject(env)
+                    from copy import deepcopy
+                    proj = deepcopy(env["PACKAGE_METADATA"])
                     del proj["tool"]["enscons"]["build-from"]
                     if "project" in proj and "readme" in proj["project"]:
                         proj["project"]["readme"] = os.path.relpath(
@@ -707,7 +708,14 @@ def enscons_defaults(env):
 
     env["PACKAGE_NAME"] = env["PACKAGE_METADATA"]["name"]
     env["PACKAGE_NAME_SAFE"] = normalize_package(env["PACKAGE_NAME"])
-    env["PACKAGE_VERSION"] = env["PACKAGE_METADATA"]["version"]
+    try:
+        env["PACKAGE_VERSION"] = env["PACKAGE_METADATA"]["version"]
+    except KeyError:
+        from versioningit import Versioningit, NotVersioningitError, get_version
+        try:
+            env["PACKAGE_METADATA"]["version"] = env["PACKAGE_VERSION"] = get_version(get_pyproject_dir(env))
+        except NotVersioningitError:
+            raise
 
     # place egg_info in src_root if defined
     if not env["EGG_INFO_PREFIX"] and env["PACKAGE_METADATA"].get("src_root"):
