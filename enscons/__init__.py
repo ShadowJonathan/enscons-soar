@@ -653,7 +653,7 @@ def SDist(env, target=None, source=None, pyproject=False):
             def altered_pyproject(env, target, source):
                 with open(str(target[0]), "w") as f:
                     from copy import deepcopy
-                    proj = deepcopy(env["PACKAGE_METADATA"])
+                    proj = deepcopy(env["PACKAGE_PYPROJECT"])
                     del proj["tool"]["enscons"]["build-from"]
                     if "project" in proj and "readme" in proj["project"]:
                         proj["project"]["readme"] = os.path.relpath(
@@ -705,6 +705,16 @@ def enscons_defaults(env):
     env["EGG_INFO_PREFIX"] = GetOption("egg_base")  # pip wants this in a target dir
     env["WHEEL_DIR"] = GetOption("wheel_dir") or "dist"  # target directory for wheel
     env["DIST_BASE"] = GetOption("dist_dir") or "dist"
+
+    try:
+        env['PACKAGE_PYPROJECT']
+    except KeyError:
+        env['PACKAGE_PYPROJECT'] = get_pyproject(env)
+
+    try:
+        env["PACKAGE_METADATA"]
+    except KeyError:
+        env["PACKAGE_METADATA"] = env["PACKAGE_PYPROJECT"]['project']
 
     env["PACKAGE_NAME"] = env["PACKAGE_METADATA"]["name"]
     env["PACKAGE_NAME_SAFE"] = normalize_package(env["PACKAGE_NAME"])
