@@ -97,7 +97,7 @@ def get_binary_tag():
     """
     from packaging import tags
 
-    return str(next(tag for tag in tags.sys_tags() if not "manylinux" in tag.platform))
+    return str(next(tag for tag in tags.sys_tags() if "manylinux" not in tag.platform))
 
 
 def get_universal_tag():
@@ -428,20 +428,40 @@ def get_tag(env) -> str:
     if not env['ROOT_IS_PURELIB']:
         from wheel.bdist_wheel import get_platform, tags, get_abi_tag
 
-        new_platform = get_platform(str(env["WHEEL_PATH"]))
+        # platlib
 
-        impl_name = tags.interpreter_name()
-        impl_ver = tags.interpreter_version()
-        impl = impl_name + impl_ver
-        abi_tag = str(get_abi_tag()).lower()
+        plat = get_platform(str(env["WHEEL_PATH"]))
 
-        tag = "-".join((impl, abi_tag, new_platform))
+        if env.get("LIMITED_API_TARGET", None) is not None:
+            # ABI3 with target
+
+            target = env["LIMITED_API_TARGET"]
+            if not isinstance(target, tuple) or len(target) != 2:
+                raise Exception("target is not a 2-tuple")
+
+            major, minor = target
+            if major != 3 or minor < 2:
+                raise Exception("cannot target abi below 3.2")
+
+            impl = "cp" + ("".join(map(str, target)))
+            abi_tag = "abi3"
+        else:
+            # Specific interpreter
+
+            impl_name = tags.interpreter_name()
+            impl_ver = tags.interpreter_version()
+            impl = impl_name + impl_ver
+
+            abi_tag = str(get_abi_tag()).lower()
+
+        tag = "-".join((impl, abi_tag, plat))
     else:
         tag = "py3-none-any"
 
     env["WHEEL_TAG"] = tag
 
     return tag
+
 
 def correct_wheel_tags(target, source, env):
     file = str(source[0])
